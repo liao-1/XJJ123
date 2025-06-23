@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>廖启忠房间播放器 </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="shortcut icon" href="https://gitee.com/liaoqizhong/mydezhibo1/raw/master/logo/111414clo0vtgtzkxqkk0k.gif" />
+    <style>
+        /*通用*/
+        * {
+            margin: 0;
+            padding: 0.5px;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        /*根*/
+        :root {
+            --primary: #6a11cb;
+            --secondary: #2575fc;
+            --accent: #ff7eee;
+            --dark: #121230;
+            --darker: #1f0a0a;
+            --light: #e6e6ff;
+            --card-bg: #1e1e42;
+            --card-hover: #2a2a5a;
+            --player-bg: #000000;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--darker), var(--dark));
+            color: var(--light);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+            padding-bottom: 40px;
+        }
+        
+        /* 头部样式 */
+        .header {
+            position: relative;
+            height: 120px;
+            overflow: hidden;
+            margin-bottom: 40px;
+            border-radius: 0 0 30px 30px;
+            background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.7)), 
+                        url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            color: #f8a809;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(to top, var(--darker), transparent);
+            z-index: 1;
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+        }
+        
+        .header h1 {
+            font-size: 2.4rem;
+            margin-bottom: 15px;
+            background: linear-gradient(to right, var(--accent), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            font-family: 'Segoe UI', '薛文轩钢笔楷体', sans-serif;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 25px;
+            max-width: 700px;
+            margin: 0 auto 25px;
+            font-family: 'Segoe UI', '薛文轩钢笔楷体', sans-serif;
+        }
+        
+        /* 主容器 */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 分区标题 */
+        .section-title {
+            font-size: 2.1rem;
+            margin: 40px 0 30px;
+            text-align: center;
+            color: var(--accent);
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(to right, var(--secondary), var(--accent));
+            border-radius: 2px;
+        }
+        
+        /* 卡片网格 */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 50px;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+            transition: all 0.4s ease;
+            position: relative;
+            height: 380px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 18px 40px rgba(106, 17, 203, 0.35);
+            border-color: rgba(255, 126, 238, 0.3);
+        }
+        
+        .card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 16px 16px 0 0;
+            transition: transform 0.5s ease;
+        }
+        
+        .card:hover .card-image {
+            transform: scale(1.05);
+        }
+        
+        .card-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card-title {
+            font-size: 1.20rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: white;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-description {
+            font-size: 0.90rem;
+            opacity: 0.85;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            flex-grow: 1;
+        }
+        
+        /* 播放按钮样式 */
+        .play-button {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            box-shadow: 0 5px 15px rgba(106, 17, 203, 0.4);
+            margin-top: auto;
+            height: 50px;
+        }
+        
+        .play-button:hover {
+            transform: translateY(-3px);
+            background: linear-gradient(45deg, var(--secondary), var(--primary));
+            box-shadow: 0 8px 20px rgba(37, 117, 252, 0.5);
+        }
+        
+        /* 本地视频卡片 */
+        .local-card {
+            background: linear-gradient(135deg, #1a1a42, #2d2d7a);
+            border: 2px dashed rgba(255, 126, 238, 0.4);
+        }
+        
+        .local-card .play-button {
+            background: linear-gradient(45deg, #c86637, #000000);
+        }
+        
+        .local-card .play-button:hover {
+            background: linear-gradient(45deg, #ff6b6b, #000000);
+        }
+        
+        /* 视频播放器 */
+        .video-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.96);
+            z-index: 1000;
+            backdrop-filter: blur(15px);
+        }
+        
+        .video-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 1000px;
+            background: var(--player-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .video-wrapper {
+            position: relative;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+        }
+        
+        .video-player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #000;
+            transition: transform 0.5s ease;
+        }
+        
+        /* 音频播放时的封面 */
+        .audio-cover {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a42, #2d2d7a);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 2;
+            padding: 20px;
+        }
+        
+        .audio-cover i {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+        
+        .audio-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-align: center;
+            padding: 0 20px;
+        }
+        
+        /* 底部音频控制条 - 重新设计 */
+        .audio-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .audio-cover:hover .audio-controls {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        /* 进度条和时间信息容器 */
+        .progress-area {
+            width: 100%;
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--accent);
+            border-radius: 3px;
+            position: relative;
+            transition: width 0.1s linear;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        /* 音量控制条 - 移动到左下方 */
+        .volume-control {
+            position: absolute;
+            left: 1px;
+            bottom: 60px;
+            display: flex;
+            align-items: center;
+            z-index: 4;
+        }
+        
+        .volume-icon {
+            font-size: 0.2rem; /* 更小的图标 */
+            color: white;
+            cursor: pointer;
+            margin-right: 8px;
+            transition: all 0.3s;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .volume-icon:hover {
+            color: var(--accent);
+            transform: scale(1.2);
+        }
+        
+        .volume-slider {
+            width: 100px; /* 更短的长度 */
+            height: 6px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .volume-slider::-webkit-slider-thumb:hover {
+            background: var(--accent);
+            transform: scale(1.2);
+        }
+        
+        .volume-slider::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        
+        .volume-slider::-moz-range-thumb:hover {
+            background: var(--accent);
+            transform: scale(1.2);
+        }
+        
+        /* 播放控制区域 */
+        .player-controls {
+            padding: 20px;
+            background: rgba(20, 20, 40, 0.95);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .control-btn {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(106, 17, 203, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            min-width: 180px;
+            justify-content: center;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(37, 117, 252, 0.6);
+        }
+        
+        .continuous-play-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            min-width: 180px;
+            justify-content: center;
+        }
+        
+        .continuous-play-btn.active {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            box-shadow: 0 5px 15px rgba(106, 17, 203, 0.5);
+        }
+        
+        .continuous-play-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .continuous-play-btn.active:hover {
+            background: linear-gradient(45deg, var(--secondary), var(--primary));
+        }
+        
+        .switch-indicator {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .continuous-play-btn.active .switch-indicator {
+            background: var(--accent);
+            box-shadow: 0 0 12px rgba(255, 126, 238, 0.7);
+        }
+        
+        /* 关闭按钮 */
+        .close-video {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 1001;
+        }
+        
+        .close-video:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: rotate(90deg);
+        }
+        
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            padding: 30px 0;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1rem;
+            margin-top: 20px;
+        }
+        
+        /* 旋转角度指示器 */
+        .rotation-indicator {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            z-index: 1001;
+            display: none;
+        }
+        
+        /* 全屏按钮 */
+        .fullscreen-btn {
+            position: absolute;
+            top: 15px;
+            right: 65px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 1001;
+        }
+        
+        .fullscreen-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1100px) {
+            .card-grid {
+                grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+                gap: 20px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                height: 320px;
+            }
+            
+            .header h1 {
+                font-size: 2.3rem;
+            }
+            
+            .header p {
+                font-size: 1.1rem;
+            }
+            
+            .section-title {
+                font-size: 1.8rem;
+            }
+            
+            .card-grid {
+                grid-template-columns: 1fr;
+                max-width: 500px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+            
+            .player-controls {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .control-btn, .continuous-play-btn {
+                width: 100%;
+            }
+            
+            .card {
+                height: 340px;
+            }
+            
+            .card-image {
+                height: 180px;
+            }
+            
+            .audio-controls {
+                padding: 10px;
+            }
+            
+            .audio-title {
+                font-size: 1.2rem;
+            }
+            
+            .volume-slider {
+                width: 70px;
+            }
+            
+            .fullscreen-btn {
+                right: 65px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                height: 280px;
+            }
+            
+            .header h1 {
+                font-size: 1.9rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .video-container {
+                width: 95%;
+            }
+            
+            .card-title {
+                font-size: 1.25rem;
+            }
+            
+            .play-button {
+                padding: 10px 9px;
+                font-size: 1rem;
+            }
+            
+            .control-btn {
+                min-width: 140px;
+                padding: 10px 15px;
+            }
+            
+            .volume-control {
+                left: 10px;
+                bottom: 10px;
+            }
+            
+            .volume-slider {
+                width: 60px;
+            }
+            
+            .fullscreen-btn {
+                top: 15px;
+                right: 65px;
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+            }
+            
+            .close-video {
+                top: 15px;
+                right: 15px;
+                width: 35px;
+                height: 35px;
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部区域 -->
+    <div class="header">
+        <div class="header-content">
+            <h1>廖启忠房间播放器</h1>
+            <p>专业音频控制，极致视听体验 </p>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- 在线视频分类 -->
+         <h2 class="section-title">在线视频</h2>
+        <div class="card-grid">
+            <div class="card" data-video="https://v.nrzj.vip/video.php?type=video">
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="随机小姐姐" class="card-image">
+                <div class="card-content">
+                    <h3 class="card-title"><b>随机小姐姐</b></h3>
+                    <p class="card-description"><b>小姐姐随机播放，每日更新最新内容</b></p>
+                    <button class="play-button">
+                        <i class="fas fa-play"></i> 播放视频
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card" data-video="https://api.yujn.cn/api/wmsc.php?type=video">
+                <img src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="完美身材" class="card-image">
+                <div class="card-content">
+                    <h3 class="card-title">完美身材</h3>
+                    <p class="card-description"><b>展示完美身材的精选视频，健身与舞蹈</b></p>
+                    <button class="play-button">
+                        <i class="fas fa-play"></i> 播放视频
+                    </button>
+                </div>
+            </div>
+            
+             <div class="card" data-video="https://api.yujn.cn/api/dj.php">
+                <img src="https://ix-marketing.imgix.net/focalpoint.png?auto=format,compress&w=1946&auto=format&fit=crop&w=800&q=80" alt="完美身材" class="card-image">
+                <div class="card-content">
+                    <h3 class="card-title">DJ音乐</h3>
+                    <p class="card-description"><b>流行音乐欣赏</b></p>
+                    <button class="play-button">
+                        <i class="fas fa-play"></i> 播放视频
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card" data-video="https://api.yujn.cn/api/zzxjj.php?type=video">
+                <img src="https://p1.a.yximgs.com/upic/2025/05/29/22/BMjAyNTA1MjkyMjEyMjdfMTIzMzAyMTQ1XzE2NTQ2MjkzMzQxN18xXzM=_B6fb32b4bf7d147be38e5caa4accee939.jpg?tag=1-1748849983-xpcwebprofile-0-zm6vw2cpqn-b84271b7c20e56e8&clientCacheKey=3xkrja4a3rw8yw6.jpg&di=JAmKagQjGGBl10QjjxayRg==&bp=14734" alt="完美身材" class="card-image">
+                <div class="card-content">
+                    <h3 class="card-title">随机小姐姐1</h3>
+                    <p class="card-description"><b>展示完美身材的精选视频，健身与舞蹈</b></p>
+                    <button class="play-button">
+                        <i class="fas fa-play"></i> 播放视频
+                    </button>
+                </div>
+            </div>
+            
+             <div class="card" data-video="https://api.yujn.cn/api/nvgao.php?type=video">
+                <img src="https://p3-pc-sign.douyinpic.com/tos-cn-p-0015/ogWY9nKfGgPEATiGAAIc7z0fGbogTFEDB5CBbE~tplv-dy-cropcenter:323:430.jpeg?biz_tag=pcweb_cover&from=327834062&lk3s=138a59ce&s=PackSourceEnum_PUBLISH&sc=cover&se=true&sh=323_430&x-expires=2064207600&x-signature=CsKRlqPq9iFplybAtdlrG%2FLduJs%3D"  alt="完美身材" class="card-image">
+                <div class="card-content">
+                    <h3 class="card-title">清纯女高</h3>
+                    <p class="card-description">展示完美身材的精选视频，青春无价</p>
+                    <button class="play-button">
+                        <i class="fas fa-play"></i> 播放视频
+                    </button>
+                </div>
+            </div>
+            
+             <div class="card" data-video="https://api.yujn.cn/api/shwd.php?type=video">
+                <img src="https://p2.a.yximgs.com/upic/2025/02/20/08/BMjAyNTAyMjAwODMwMThfMTQwNDIyMzZfMTU3MzgzMTY5OTY2XzFfMw==_B28022d551f4a215d3ba61be64f753601.jpg?tag=1-1748849223-xpcwebprofile-0-enohrghjp3-dc9fadd377f9d4ff&clientCacheKey=3xdg4zmrtke79je.jpg&di=JAmKagQjGGBl10QjjxayRg==&bp=14734" alt="完美身材" class="card-image">
+                <div class="card-content">
+                    <h3 class="card-title">丝滑舞蹈</h3>
+                    <p class="card-description">展示完美身材的精选视频，青春无价</p>
+                    <button class="play-button">
+                        <i class="fas fa-play"></i> 播放视频
+                    </button>
+                </div>
+            </div>
+            
+             <div class="card" data-video="https://api.yujn.cn/api/chuanda.php?type=video">
+                <img src="https://fourhoi.com/actress/1014614-t.jpg" alt="完美身材" class="card-image">
+                <div class="card-content">
+                    <h3 class="card-title">穿搭系列</h3>
+                    <p class="card-description">展示完美身材的精选视频，青春无价</p>
+                    <button class="play-button">
+                        <i class="fas fa-play"></i> 播放视频
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card" data-video="https://api.yujn.cn/api/diaodai.php?type=video">
+                <img src="https://media.istockphoto.com/id/2150308249/photo/portrait-of-a-beautiful-woman-with-natural-make-up.jpg?s=1024x1024&w=is&k=20&c=ZFV5HXn3HT7HsAhM37zD9XV4vCRzflZ_ZDSuaUuyghM=" alt="吊带系列" class="card-image">
+                <div class="card-content">
+                    <h3 class="card-title">吊带系列</h3>
+                    <p class="card-description">各种吊带装小姐姐视频合集，夏日清凉</p>
+                    <button class="play-button">
+                        <i class="fas fa-play"></i> 播放视频
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card" data-video="https://www.lcc8.com/sv/video.php?type=video">
+                <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="双倍快乐" class="card-image">
+                <div class="card-content">
+                    <h3 class="card-title">摸鱼日报</h3>
+                    <p class="card-description">双人组合的精彩表演，闺蜜互动</p>
+                    <button class="play-button">
+                        <i class="fas fa-play"></i> 播放视频
+                    </button>
+                </div>
+            </div>
+
+            <div class="card" data-video="https://v2.api-m.com/api/meinv?return=302">
+                <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="双倍快乐" class="card-image">
+                <div class="card-content">
+                    <h3 class="card-title">摸鱼晚报</h3>
+                    <p class="card-description">双人组合的精彩表演，闺蜜互动</p>
+                    <button class="play-button">
+                        <i class="fas fa-play"></i> 播放视频
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card" data-video="https://api.yujn.cn/api/yuzu.php?type=video">
+                <img src="https://images.unsplash.com/photo-1524502397800-2eeaad7c3fe5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="玉足美腿" class="card-image">
+                <div class="card-content">
+                    <h3 class="card-title">玉足美腿</h3>
+                    <p class="card-description">展示美腿与玉足的特辑，精心拍摄</p>
+                    <button class="play-button">
+                        <i class="fas fa-play"></i> 播放视频
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card" data-video="https://api.317ak.com/API/sp/lbll.php?type=video">
+                <img src="https://images.unsplash.com/photo-1524502397800-2eeaad7c3fe5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="玉足美腿" class="card-image">
+                <div class="card-content">
+                    <h3 class="card-title">养眼舞蹈</h3>
+                    <p class="card-description">展示美腿与玉足的特辑，精心拍摄</p>
+                    <button class="play-button">
+                        <i class="fas fa-play"></i> 播放视频
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card" data-video="https://api.yujn.cn/api/rewu.php?type=video">
+                <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="怼脸自拍" class="card-image">
+                <div class="card-content">
+                    <h3 class="card-title">热舞视频</h3>
+                    <p class="card-description">近距离自拍视频合集，展现精致妆容</p>
+                    <button class="play-button">
+                        <i class="fas fa-play"></i> 播放视频
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 本地视频库 -->
+        <h2 class="section-title">本地媒体</h2>
+        <div class="card-grid">
+            <div class="card local-card" id="local-video-card">
+                <img src="https://images.unsplash.com/photo-1511367461989-f85a21fda167?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="本地视频" class="card-image">
+                <div class="card-content">
+                    <h3 class="card-title">本地媒体库</h3>
+                    <p class="card-description">播放您设备中的视频或音频文件，支持多种格式</p>
+                    <button class="play-button" id="select-video-btn">
+                        <i class="fas fa-folder-open"></i> 选择媒体文件
+                    </button>
+                    <input type="file" id="media-upload" accept="video/*,audio/*,image/*" multiple style="display: none">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 视频播放弹窗 -->
+    <div id="video-modal" class="video-modal">
+        <div class="rotation-indicator" id="rotation-indicator">旋转: 0°</div>
+        <button class="fullscreen-btn" id="fullscreen-btn">
+            <i class="fas fa-expand"></i>
+        </button>
+        <button class="close-video" id="close-video-btn">&times;</button>
+        <div class="video-container">
+            <div class="video-wrapper">
+                <div class="audio-cover" id="audio-cover">
+                    <i class="fas fa-music"></i>
+                    <div class="audio-title" id="audio-title">音频播放中</div>
+                    
+                    <!-- 底部音频控制条 -->
+                    <div class="audio-controls">
+                        <div class="progress-area">
+                            <div class="progress-container" id="progress-container">
+                                <div class="progress-bar" id="progress-bar"></div>
+                            </div>
+                            <div class="time-info">
+                                <span id="current-time">00:00</span>
+                                <span id="duration">00:00</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 音量控制条 - 移动到左下方 -->
+                        <div class="volume-control">
+                            <i class="fas fa-volume-down volume-icon" id="volume-icon"></i>
+                            <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.01" value="1">
+                        </div>
+                    </div>
+                </div>
+                <video id="video-player" class="video-player" controls></video>
+            </div>
+            <div class="player-controls">
+                <button class="control-btn" id="prev-btn">
+                    <i class="fas fa-step-backward"></i> 上一个
+                </button>
+                <button class="control-btn" id="next-btn">
+                    <i class="fas fa-step-forward"></i> 下一个
+                </button>
+                <button class="control-btn" id="rotate-btn">
+                    <i class="fas fa-redo"></i> 旋转画面
+                </button>
+                <button class="continuous-play-btn active" id="continuous-btn">
+                    <span class="switch-indicator"></span>
+                    连续播放: <span id="status-text">开启</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>© 2023 廖启忠房间播放器 | 专业音频控制 | 仅供学习交流使用</p>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentVideoIndex = 0;
+        let videoList = [];
+        let isContinuousPlay = true;
+        let isLocalVideo = false;
+        let rotation = 0;
+        let isDragging = false;
+        let isFullscreen = false;
+        
+        // DOM元素
+        const videoModal = document.getElementById('video-modal');
+        const videoPlayer = document.getElementById('video-player');
+        const closeVideoBtn = document.getElementById('close-video-btn');
+        const continuousBtn = document.getElementById('continuous-btn');
+        const statusText = document.getElementById('status-text');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const selectVideoBtn = document.getElementById('select-video-btn');
+        const mediaUpload = document.getElementById('media-upload');
+        const rotateBtn = document.getElementById('rotate-btn');
+        const rotationIndicator = document.getElementById('rotation-indicator');
+        const audioCover = document.getElementById('audio-cover');
+        const audioTitle = document.getElementById('audio-title');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        
+        // 音频控制元素
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progress-container');
+        const currentTimeDisplay = document.getElementById('current-time');
+        const durationDisplay = document.getElementById('duration');
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeIcon = document.getElementById('volume-icon');
+        
+        // 修复播放按钮点击事件
+        document.querySelectorAll('.card .play-button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                // 阻止事件冒泡
+                e.stopPropagation();
+                
+                // 获取最近的卡片元素
+                const card = this.closest('.card');
+                const videoUrl = card.dataset.video;
+                
+                // 播放视频
+                playVideo(videoUrl);
+            });
+        });
+        
+        // 播放视频函数
+        function playVideo(url) {
+            videoList = [url];
+            currentVideoIndex = 0;
+            isLocalVideo = false;
+            
+            // 重置旋转状态
+            resetRotation();
+            
+            // 隐藏音频封面
+            audioCover.style.display = 'none';
+            videoPlayer.style.display = 'block';
+            videoPlayer.controls = true;
+            
+            // 设置视频源
+            videoPlayer.src = url;
+            
+            // 显示弹窗
+            videoModal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            
+            // 开始播放
+            setTimeout(() => {
+                videoPlayer.play().catch(e => console.log('播放失败:', e));
+            }, 500);
+            
+            // 设置事件监听
+            setupVideoEvents();
+        }
+        
+        // 设置视频事件监听
+        function setupVideoEvents() {
+            // 移除旧的事件监听器
+            videoPlayer.onended = null;
+            
+            // 添加新的事件监听器
+            videoPlayer.onended = function() {
+                if (isContinuousPlay) {
+                    playNextVideo();
+                }
+            };
+            
+            // 添加时间更新监听
+            videoPlayer.ontimeupdate = updateProgress;
+            
+            // 添加音量变化监听
+            videoPlayer.onvolumechange = updateVolumeDisplay;
+            
+            // 初始化音量显示
+            updateVolumeDisplay();
+        }
+        
+        // 更新进度条和时间显示
+        function updateProgress() {
+            if (!isDragging) {
+                const progressPercent = (videoPlayer.currentTime / videoPlayer.duration) * 100;
+                progressBar.style.width = `${progressPercent}%`;
+                
+                // 更新时间显示
+                const minutes = Math.floor(videoPlayer.currentTime / 60);
+                const seconds = Math.floor(videoPlayer.currentTime % 60);
+                currentTimeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                const totalMinutes = Math.floor(videoPlayer.duration / 60);
+                const totalSeconds = Math.floor(videoPlayer.duration % 60);
+                if (!isNaN(totalMinutes)) {
+                    durationDisplay.textContent = `${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}`;
+                }
+            }
+        }
+        
+        // 更新音量显示
+        function updateVolumeDisplay() {
+            volumeSlider.value = videoPlayer.volume;
+            
+            // 更新音量图标
+            if (videoPlayer.volume === 0) {
+                volumeIcon.className = 'fas fa-volume-mute volume-icon';
+            } else if (videoPlayer.volume < 0.5) {
+                volumeIcon.className = 'fas fa-volume-down volume-icon';
+            } else {
+                volumeIcon.className = 'fas fa-volume-up volume-icon';
+            }
+        }
+        
+        // 播放下一个视频
+        function playNextVideo() {
+            if (videoList.length === 0) return;
+            
+            currentVideoIndex = (currentVideoIndex + 1) % videoList.length;
+            
+            if (isLocalVideo) {
+                // 本地视频/音频
+                const media = videoList[currentVideoIndex];
+                if (media.type.startsWith('audio/')) {
+                    showAudioCover(media.name);
+                } else {
+                    audioCover.style.display = 'none';
+                    videoPlayer.style.display = 'block';
+                    videoPlayer.controls = true;
+                }
+                videoPlayer.src = media.url;
+            } else {
+                // 在线视频添加时间戳避免缓存
+                videoPlayer.src = videoList[currentVideoIndex] + '&t=' + Date.now();
+            }
+            
+            videoPlayer.play().catch(e => console.log('播放失败:', e));
+        }
+        
+        // 播放上一个视频
+        function playPrevVideo() {
+            if (videoList.length === 0) return;
+            
+            currentVideoIndex = (currentVideoIndex - 1 + videoList.length) % videoList.length;
+            
+            if (isLocalVideo) {
+                const media = videoList[currentVideoIndex];
+                if (media.type.startsWith('audio/')) {
+                    showAudioCover(media.name);
+                } else {
+                    audioCover.style.display = 'none';
+                    videoPlayer.style.display = 'block';
+                    videoPlayer.controls = true;
+                }
+                videoPlayer.src = media.url;
+            } else {
+                videoPlayer.src = videoList[currentVideoIndex] + '&t=' + Date.now();
+            }
+            
+            videoPlayer.play().catch(e => console.log('播放失败:', e));
+        }
+        
+        // 显示音频封面
+        function showAudioCover(title) {
+            audioCover.style.display = 'flex';
+            videoPlayer.style.display = 'none';
+            videoPlayer.controls = false;
+            audioTitle.textContent = title || '音频播放中';
+            
+            // 更新音频控制条
+            updateVolumeDisplay();
+        }
+        
+        // 切换连续播放状态
+        function toggleContinuousPlay() {
+            isContinuousPlay = !isContinuousPlay;
+            continuousBtn.classList.toggle('active', isContinuousPlay);
+            statusText.textContent = isContinuousPlay ? '开启' : '关闭';
+        }
+        
+        // 关闭视频弹窗
+        function closeVideoModal() {
+            videoPlayer.pause();
+            videoPlayer.src = '';
+            videoModal.style.display = 'none';
+            document.body.style.overflow = '';
+            resetRotation();
+            
+            // 如果处于全屏状态，则退出全屏
+            if (isFullscreen) {
+                toggleFullscreen();
+            }
+        }
+        
+        // 本地媒体文件选择
+        selectVideoBtn.addEventListener('click', () => {
+            mediaUpload.click();
+        });
+        
+        mediaUpload.addEventListener('change', function(e) {
+            const files = e.target.files;
+            videoList = [];
+            
+            if (files.length > 0) {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    if (file.type.startsWith('video/') || file.type.startsWith('audio/')) {
+                        const mediaUrl = URL.createObjectURL(file);
+                        videoList.push({
+                            name: file.name,
+                            url: mediaUrl,
+                            type: file.type
+                        });
+                    }
+                }
+                
+                if (videoList.length > 0) {
+                    currentVideoIndex = 0;
+                    isLocalVideo = true;
+                    
+                    // 重置旋转状态
+                    resetRotation();
+                    
+                    // 播放第一个媒体文件
+                    const firstMedia = videoList[0];
+                    if (firstMedia.type.startsWith('audio/')) {
+                        showAudioCover(firstMedia.name);
+                    } else {
+                        audioCover.style.display = 'none';
+                        videoPlayer.style.display = 'block';
+                        videoPlayer.controls = true;
+                    }
+                    
+                    videoPlayer.src = firstMedia.url;
+                    videoModal.style.display = 'block';
+                    document.body.style.overflow = 'hidden';
+                    
+                    // 开始播放
+                    setTimeout(() => {
+                        videoPlayer.play().catch(e => console.log('播放失败:', e));
+                    }, 500);
+                    
+                    // 设置事件监听
+                    setupVideoEvents();
+                }
+            }
+        });
+        
+        // 旋转视频画面
+        rotateBtn.addEventListener('click', function() {
+            rotation = (rotation + 90) % 360;
+            videoPlayer.style.transform = `rotate(${rotation}deg)`;
+            rotationIndicator.textContent = `旋转: ${rotation}°`;
+            rotationIndicator.style.display = 'block';
+            
+            // 3秒后隐藏指示器
+            clearTimeout(window.rotationTimeout);
+            window.rotationTimeout = setTimeout(() => {
+                rotationIndicator.style.display = 'none';
+            }, 2000);
+        });
+        
+        // 重置旋转状态
+        function resetRotation() {
+            rotation = 0;
+            videoPlayer.style.transform = 'rotate(0deg)';
+            rotationIndicator.style.display = 'none';
+        }
+        
+        // 切换全屏状态
+        function toggleFullscreen() {
+            const videoContainer = document.querySelector('.video-container');
+            
+            if (!isFullscreen) {
+                // 进入全屏
+                if (videoContainer.requestFullscreen) {
+                    videoContainer.requestFullscreen();
+                } else if (videoContainer.mozRequestFullScreen) {
+                    videoContainer.mozRequestFullScreen();
+                } else if (videoContainer.webkitRequestFullscreen) {
+                    videoContainer.webkitRequestFullscreen();
+                } else if (videoContainer.msRequestFullscreen) {
+                    videoContainer.msRequestFullscreen();
+                }
+                
+                fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+            } else {
+                // 退出全屏
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                
+                fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+            }
+            
+            isFullscreen = !isFullscreen;
+        }
+        
+        // 检测全屏状态变化
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                // 退出全屏
+                isFullscreen = false;
+                fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+            }
+        });
+        
+        // 音频控制事件监听
+        // 进度条点击
+        progressContainer.addEventListener('click', (e) => {
+            const rect = progressContainer.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            videoPlayer.currentTime = pos * videoPlayer.duration;
+        });
+        
+        // 进度条拖动
+        progressBar.addEventListener('mousedown', () => {
+            isDragging = true;
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const rect = progressContainer.getBoundingClientRect();
+                let pos = (e.clientX - rect.left) / rect.width;
+                pos = Math.max(0, Math.min(1, pos)); // 限制在0-1之间
+                progressBar.style.width = `${pos * 100}%`;
+                videoPlayer.currentTime = pos * videoPlayer.duration;
+            }
+        });
+        
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        // 音量控制
+        volumeSlider.addEventListener('input', () => {
+            videoPlayer.volume = parseFloat(volumeSlider.value);
+            updateVolumeDisplay();
+        });
+        
+        // 喇叭按钮点击事件 - 静音切换
+        volumeIcon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (videoPlayer.volume > 0) {
+                videoPlayer.volume = 0;
+                volumeSlider.value = 0;
+            } else {
+                videoPlayer.volume = 1;
+                volumeSlider.value = 1;
+            }
+            updateVolumeDisplay();
+        });
+        
+        // 事件监听
+        closeVideoBtn.addEventListener('click', closeVideoModal);
+        continuousBtn.addEventListener('click', toggleContinuousPlay);
+        prevBtn.addEventListener('click', playPrevVideo);
+        nextBtn.addEventListener('click', playNextVideo);
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+        
+        // 点击弹窗外部关闭
+        videoModal.addEventListener('click', function(d) {
+            if (e.target === videoModal) {
+                closeVideoModal();
+            }
+        });
+        
+        // 初始化音量显示
+        updateVolumeDisplay();
+    </script>
+</body>
+</html>
